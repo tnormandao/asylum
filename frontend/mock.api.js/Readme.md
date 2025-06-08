@@ -15,6 +15,15 @@ function downloadObjectAsJson(exportObj, exportName){
   downloadAnchorNode.remove();
 }
 
+// 0. Define Schemas
+const UserSchema = { name: { type: 'string', required: true } };
+const PostSchema = {
+  title: { type: 'string', required: true, minLength: 5 },
+  content: { type: 'string', required: true },
+  status: { type: 'string', required: true, enum: ['draft', 'published'] },
+  userId: { type: 'string', required: true },
+};
+
 // 1. Prepare seed data (e.g., from a `seed.json` file)
 const seedData = {
   users: [
@@ -33,8 +42,13 @@ const api = new MockApi('my-app-db-v3', {
 });
 
 // Define routes
+// -- Posts --
+api.post('/posts', PostSchema, (req, res, db) => db.add('posts', req.body).then(post => res.status(201).json(post)));
 api.get('/posts', (req, res, db) => db.find('posts').then(p => res.json(p)));
-api.post('/posts', (req, res, db) => db.add('posts', req.body).then(p => res.status(201).json(p)));
+ 
+// -- Users --
+api.post('/users', UserSchema, (req, res, db) => db.add('users', req.body).then(user => res.status(201).json(user)));
+api.get('/users/:userId', (req, res, db) => db.get('users', req.params.userId).then(user => user ? res.json(user) : res.status(404).send('Not Found')));
 
 // 3. Run the demonstration
 (async () => {
